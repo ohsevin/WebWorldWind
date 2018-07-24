@@ -399,6 +399,13 @@ define([
         BasicWorldWindowController.prototype.applyLimits = function () {
             var navigator = this.wwd.navigator;
 
+            //push the navigator over the poles
+            var latitude = navigator.lookAtLocation.latitude;
+            if (latitude < -90 || latitude > 90) {
+                navigator.lookAtLocation.longitude += 180;
+                navigator.heading += 180;
+            }
+
             // Clamp latitude to between -90 and +90, and normalize longitude to between -180 and +180.
             navigator.lookAtLocation.latitude = WWMath.clamp(navigator.lookAtLocation.latitude, -90, 90);
             navigator.lookAtLocation.longitude = Angle.normalizedDegreesLongitude(navigator.lookAtLocation.longitude);
