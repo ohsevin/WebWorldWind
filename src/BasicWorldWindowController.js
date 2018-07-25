@@ -66,6 +66,13 @@ define([
         var BasicWorldWindowController = function (worldWindow) {
             WorldWindowController.call(this, worldWindow); // base class checks for a valid worldWindow
 
+            /**
+             * Enables continuous panning over the poles
+             * @type {Boolean}
+             * @default false
+             */
+            this.enablePanningOverPoles = false;
+
             // Intentionally not documented.
             this.primaryDragRecognizer = new DragRecognizer(this.wwd, null);
             this.primaryDragRecognizer.addListener(this);
@@ -399,11 +406,12 @@ define([
         BasicWorldWindowController.prototype.applyLimits = function () {
             var navigator = this.wwd.navigator;
 
-            //push the navigator over the poles
-            var latitude = navigator.lookAtLocation.latitude;
-            if (latitude < -90 || latitude > 90) {
-                navigator.lookAtLocation.longitude += 180;
-                navigator.heading += 180;
+            if (this.enablePanningOverPoles) {
+                var latitude = navigator.lookAtLocation.latitude;
+                if (latitude < -90 || latitude > 90) {
+                    navigator.lookAtLocation.longitude += 180;
+                    navigator.heading += 180;
+                }
             }
 
             // Clamp latitude to between -90 and +90, and normalize longitude to between -180 and +180.
