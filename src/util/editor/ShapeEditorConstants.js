@@ -38,6 +38,10 @@ define([],
             // Indicates a control point controlling the radius of a shape.
             RADIUS: "radius",
 
+            MIN_CORNER: "min_corner",
+
+            MAX_CORNER: "max_corner",
+
             // Indicates that an entire shape is being dragged.
             DRAG: "drag"
         };

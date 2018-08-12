@@ -21,12 +21,14 @@ define([
         '../error/ArgumentError',
         '../geom/Location',
         '../util/Logger',
+        '../geom/Sector',
         '../shapes/ShapeAttributes',
         '../shapes/SurfaceShape'
     ],
     function (ArgumentError,
               Location,
               Logger,
+              Sector,
               ShapeAttributes,
               SurfaceShape) {
         "use strict";
@@ -111,6 +113,35 @@ define([
             this._boundaries[1] = new Location(sector.maxLatitude, sector.minLongitude);
             this._boundaries[2] = new Location(sector.maxLatitude, sector.maxLongitude);
             this._boundaries[3] = new Location(sector.minLatitude, sector.maxLongitude);
+        };
+
+        // Internal use only. Intentionally not documented.
+        // SurfaceSector.prototype.getReferencePosition = function () {
+        //     // Assign the first position as the reference position.
+        //     if (this._boundaries.length > 0){
+        //         return new Location(this._boundaries[0].latitude, this._boundaries[0].longitude);
+        //     } else {
+        //         return null;
+        //     }
+        // };
+
+        // Internal use only. Intentionally not documented.
+        SurfaceSector.prototype.getReferencePosition = function () {
+            // Assign the first position as the reference position.
+            if (this._boundaries.length > 0){
+                return new Location(this.sector.centroidLatitude(), this.sector.centroidLongitude());
+            } else {
+                return null;
+            }
+        };
+
+        // Internal use only. Intentionally not documented.
+        SurfaceSector.prototype.moveTo = function (globe, position) {
+            if (this._boundaries.length > 0) {
+                this._boundaries = this.computeShiftedLocations(globe, this.getReferencePosition(), position,
+                    this._boundaries);
+                this.sector = new Sector(this._boundaries[0].latitude, this._boundaries[1].latitude, this._boundaries[1].longitude, this._boundaries[2].longitude )
+            }
         };
 
         return SurfaceSector;

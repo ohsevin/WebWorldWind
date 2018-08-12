@@ -798,9 +798,12 @@ define([
             var delta = newPoint.subtract(oldPoint);
 
             for (var i = 0, len = locations.length; i < len; i++) {
+                console.log("***");
+                console.log("Old Latitude: " + locations[i].latitude);
                 globe.computePointFromLocation(locations[i].latitude, locations[i].longitude, result);
                 result.add(delta);
                 globe.computePositionFromPoint(result[0], result[1], result[2], newPos);
+                console.log("New Latitude: " + newPos.latitude);
                 newLocations.push(new Location(newPos.latitude, newPos.longitude));
             }
 
