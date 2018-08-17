@@ -80,18 +80,18 @@ define([
         });
 
         /**
-         * It is possible to create the document either empty or with preexisting content retrieved from already
-         * existing XML. This will return the representation of WFS Transaction which can be modified.
+         * Create an instance of the WfsTransaction. This transaction can be pre-populated by the default XML
+         * representation. It is possible to modify the received object by either adding or removing pieces.
          * @param options {Object}
          * @param options.xmlDom {XMLDocument} The document to be used. Optional.
          * @param options.schemas {Object[]} The available schemas. Optional
          */
         WfsTransaction.create = function (options) {
+            // Differentiate based on the provided data.
             var wfsTransaction = new WfsTransaction(options);
             wfsTransaction.xmlDom = options;
             wfsTransaction.assembleDocument();
             return wfsTransaction;
-
         };
 
         WfsTransaction.prototype.createBaseElement = function () {
