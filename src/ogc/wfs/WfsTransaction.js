@@ -1,7 +1,8 @@
 /*
- * Copyright 2018 WorldWind Contributors
+ * Copyright 2003-2006, 2009, 2017, United States Government, as represented by the Administrator of the
+ * National Aeronautics and Space Administration. All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * The NASAWorldWind/WebWorldWind platform is licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -20,16 +21,16 @@
 define([
         '../../error/ArgumentError',
         '../../util/Logger',
-        'src/ogc/wfs/InsertXmlBuilder',
-        'src/ogc/wfs/DeleteXmlBuilder',
-        'src/ogc/wfs/UpdateXmlBuilder'
+        'src/ogc/wfs/WfsDelete',
+        'src/ogc/wfs/WfsInsert',
+        'src/ogc/wfs/WfsUpdate'
     ],
 
     function (ArgumentError,
               Logger,
-              InsertXmlBuilder,
-              DeleteXmlBuilder,
-              UpdateXmlBuilder
+              WfsDelete,
+              WfsInsert,
+              WfsUpdate
     ) {
         "use strict";
 
@@ -57,9 +58,17 @@ define([
                 {schemaNamespace: 'xmlns:gml', schemaUrl: 'http://www.opengis.net/gml'},
                 {schemaNamespace: 'xmlns:xsi', schemaUrl: 'http://www.w3.org/2001/XMLSchema-instance'}
             ];
+
+            this.delete = new WfsDelete();
+            this.insert = new WfsInsert();
+            this.update = new WfsUpdate();
         };
 
         Object.defineProperties(WfsTransaction.prototype, {
+            /**
+             * The current state of the XML Document represented by the instance of this class.
+             * @type {XmlDocument}
+             */
             xmlDom: {
                 get: function () {
                     return this._xmlDom;
@@ -87,45 +96,77 @@ define([
          * @param options.schemas {Object[]} The available schemas. Optional
          */
         WfsTransaction.create = function (options) {
-            // Differentiate based on the provided data.
-            var wfsTransaction = new WfsTransaction(options);
-            wfsTransaction.xmlDom = options;
-            wfsTransaction.assembleDocument();
+            var wfsTransaction;
+            if (options.xmlDom) {
+                wfsTransaction = new WfsTransaction(options);
+                wfsTransaction.xmlDom = options.xmlDom;
+                wfsTransaction.assembleDocument();
+            } else {
+                wfsTransaction = new WfsTransaction();
+                wfsTransaction.schemas = options.schemas;
+                wfsTransaction.createBaseElement();
+            }
             return wfsTransaction;
         };
 
+        /**
+         * Create and store basic element in the xmlDom property. The document is created with the schemas provided
+         * via the schemas property or with the basic set of schemas necessary for the WFS.
+         * @private
+         */
         WfsTransaction.prototype.createBaseElement = function () {
             var wfsNamespace = "http://www.opengis.net/wfs";
             var version = "1.0.0";
+
             var baseTransactionDocument = document.implementation.createDocument(wfsNamespace, 'wfs:Transaction', null);
             baseTransactionDocument.documentElement.setAttribute('service', 'WFS');
             baseTransactionDocument.documentElement.setAttribute('version', version);
+
             // Set correct XMLNS types.
             var length = this.schemas.length;
             for (var t = 0; t < length; t++) {
                 baseTransactionDocument.documentElement.setAttribute(this.schemas[t].schemaNamespace, this.schemas[t].schemaUrl);
             }
 
-            return baseTransactionDocument;
+            this.xmlDom = baseTransactionDocument;
         };
 
-        WfsTransaction.prototype.insert = function (schemas, shape, typeName) {
-            // this.addElement()
-            return InsertXmlBuilder.Insert(baseElement, shape, typeName);
+        /**
+         * Create new Insert node which is part of the Transaction and insert it into the XML Document.
+         * @param shape {Shape} Any valid Shape from the framework shapes.
+         * @param typeName {String} Name of the type of the shapes used in the Node.
+         * @return {WfsTransaction} The API for transaction is chainable.
+         *  .insert(polygon, 'polygon')
+         *  .insert(polygon, 'polygon')
+         */
+        WfsTransaction.prototype.insert = function (shape, typeName) {
+            if (!shape) {
+                throw new ArgumentError(
+                    Logger.logMessage(Logger.LEVEL_ERROR, 'WfsTransaction', 'insert', 'Shape must be provided')
+                );
+            }
 
+            if (!typeName) {
+                throw new ArgumentError(
+                    Logger.logMessage(Logger.LEVEL_ERROR, 'WfsTransaction', 'insert', 'Type name must be provided')
+                );
+            }
+
+            this.xmlDom.insertChild(this.insert.dom(shape, typeName));
+
+            return this;
         };
 
-        WfsTransaction.update = function (schemas, typeName, propertyName, value, FeatureId) {
+        WfsTransaction.prototype.update = function (schemas, typeName, propertyName, value, FeatureId) {
             // Create the instance of the Update Element.
             var wfsTransaction = new WfsTransaction(schemas);
             wfsTransaction.schemas = schemas;
             var baseElement = wfsTransaction.createBaseElement(schemas);
-           if (propertyName === 'the_geom')
-                return UpdateXmlBuilder.updateGeom(baseElement,typeName, propertyName, value, FeatureId);
-            else
-                return UpdateXmlBuilder.Update(baseElement,typeName, propertyName, value, FeatureId);
-
-
+            if (propertyName === 'the_geom') {
+                return UpdateXmlBuilder.updateGeom(baseElement, typeName, propertyName, value, FeatureId);
+            } else {
+                return UpdateXmlBuilder.Update(baseElement, typeName, propertyName, value, FeatureId);
+            }
         };
 
         WfsTransaction.delete = function (schemas, typeName, property) {

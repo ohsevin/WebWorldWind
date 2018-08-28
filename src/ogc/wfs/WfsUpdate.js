@@ -1,7 +1,8 @@
 /*
- * Copyright 2018 WorldWind Contributors
+ * Copyright 2003-2006, 2009, 2017, United States Government, as represented by the Administrator of the
+ * National Aeronautics and Space Administration. All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * The NASAWorldWind/WebWorldWind platform is licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -16,87 +17,72 @@
 /**
  * @exports UpdateXmlBuilder
  */
-define([
-        '../../error/ArgumentError',
-        '../../util/Logger',
-        '../../util/Promise'
-    ],
-    function (ArgumentError,
-              Logger,
-              Promise
-    ) {
-        "use strict";
+define([], function () {
+    "use strict";
 
-        /**
-         * Provides a list of Features from a Web Feature Service including the capabilities and Feature description
-         * documents. For automated configuration, utilize the create function which provides a Promise with a fully
-         * configured UpdateXmlBuilder.
-         * @constructor
-         */
-        var UpdateXmlBuilder = {
+    /**
+     *
+     * @constructor
+     */
+    var WfsUpdate = function(document) {
+        this._xmlDocument = document;
+    };
 
-            Update: function (doc, typeName, propertyName, value, filterId) {
+    WfsUpdate.prototype.dom = function(typeName, propertyName, value, filterId) {
+        var update = this._xmlDocument.createElement('wfs:Update');
+        update.setAttribute('typeName', typeName);
+        var prop = this._xmlDocument.createElement('wfs:Property');
+        var propName = this._xmlDocument.createElement('wfs:Name');
+        propName.textContent = propertyName;
+        var literal = this._xmlDocument.createElement('wfs:Value');
+        literal.textContent = value;
+        prop.appendChild(propName);
+        prop.appendChild(literal);
+        update.appendChild(prop);
+        update.appendChild(this.filter(filterId));
 
-                var Update = doc.createElement('wfs:Update');
-                Update.setAttribute('typeName', typeName);
-                var prop = doc.createElement('wfs:Property');
-                var propName = doc.createElement('wfs:Name');
-                propName.textContent = propertyName;
-                var literal = doc.createElement('wfs:Value');
-                literal.textContent = value;
-                prop.appendChild(propName);
-                prop.appendChild(literal);
-                Update.appendChild(prop);
-                Update.appendChild(UpdateXmlBuilder.Filter(doc, filterId));
-                doc.documentElement.appendChild(Update);
-                return doc;
+        return update;
+    };
 
+    // Update geometry. Different types of the geometry.
+    WfsUpdate.prototype.updateGeom = function(typeName, propertyName, value, filterId) {
+        var update = this._xmlDocument.createElement('wfs:Update');
+        update.setAttribute('typeName', typeName);
+        var prop = this._xmlDocument.createElement('wfs:Property');
+        var propName = this._xmlDocument.createElement('wfs:Name');
+        propName.textContent = propertyName;
+        var literal = this._xmlDocument.createElement('wfs:Value');
+        literal.appendChild(this.geometry(value));
+        prop.appendChild(propName);
+        prop.appendChild(literal);
+        update.appendChild(prop);
+        update.appendChild(this.filter(filterId));
 
-            },
+        return update;
+    };
 
+    WfsUpdate.prototype.geometry = function (coordinate) {
+        var multiLine = this._xmlDocument.createElement('gml:MultiLineString');
+        multiLine.setAttribute('srsName', "http://www.opengis.net/gml/srs/epsg.xml#4326");
+        var lineStringMember = this._xmlDocument.createElement('gml:lineStringMember');
+        var lineString = this._xmlDocument.createElement('gml:LineString');
+        var coordinates = this._xmlDocument.createElement('gml:coordinates');
+        coordinates.textContent = coordinate;
+        lineString.appendChild(coordinates);
+        lineStringMember.appendChild(lineString);
+        multiLine.appendChild(lineStringMember);
 
-            updateGeom: function (doc, typeName, propertyName, value, filterId) {
-                var Update = doc.createElement('wfs:Update');
-                Update.setAttribute('typeName', typeName);
-                var prop = doc.createElement('wfs:Property');
-                var propName = doc.createElement('wfs:Name');
-                propName.textContent = propertyName;
-                var literal = doc.createElement('wfs:Value');
-                literal.appendChild(UpdateXmlBuilder.Geometry(doc, value));
-                prop.appendChild(propName);
-                prop.appendChild(literal);
-                Update.appendChild(prop);
-                Update.appendChild(UpdateXmlBuilder.Filter(doc, filterId));
-                doc.documentElement.appendChild(Update);
-                return doc;
-            },
+        return multiLine;
+    };
 
-            Geometry: function (doc, coordinate) {
+    WfsUpdate.prototype.filter = function(filterId) {
+        var filter = this._xmlDocument.createElement('ogc:Filter');
+        var id = this._xmlDocument.createElement('ogc:FeatureId');
+        id.setAttribute('fid', filterId);
+        filter.appendChild(id);
 
-                var multiLine = doc.createElement('gml:MultiLineString');
-                multiLine.setAttribute('srsName', "http://www.opengis.net/gml/srs/epsg.xml#4326");
-                var lineStringMember = doc.createElement('gml:lineStringMember');
-                var lineString = doc.createElement('gml:LineString');
-                var coordinates = doc.createElement('gml:coordinates');
-                coordinates.textContent = coordinate;
-                lineString.appendChild(coordinates);
-                lineStringMember.appendChild(lineString);
-                multiLine.appendChild(lineStringMember);
+        return filter;
+    };
 
-                return multiLine;
-            },
-
-            Filter: function (doc, filterId) {
-
-                var filter = doc.createElement('ogc:Filter');
-                var Id = doc.createElement('ogc:FeatureId');
-                Id.setAttribute('fid', filterId);
-                filter.appendChild(Id);
-
-                return filter;
-            }
-
-        };
-
-        return UpdateXmlBuilder;
-    });
+    return WfsUpdate;
+});

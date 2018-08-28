@@ -1,7 +1,8 @@
 /*
- * Copyright 2018 WorldWind Contributors
+ * Copyright 2003-2006, 2009, 2017, United States Government, as represented by the Administrator of the
+ * National Aeronautics and Space Administration. All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * The NASAWorldWind/WebWorldWind platform is licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -14,43 +15,47 @@
  * limitations under the License.
  */
 /**
- * @exports DeleteXmlBuilder
+ * @exports WfsDelete
  */
-define([
-        '../../error/ArgumentError',
-        '../../util/Logger',
-        '../../util/Promise'
-    ],
-    function (ArgumentError,
-              Logger,
-              Promise
-    ) {
+define([],
+    function () {
         "use strict";
 
         /**
-         * Provides a list of Features from a Web Feature Service including the capabilities and Feature description
-         * documents. For automated configuration, utilize the create function which provides a Promise with a fully
-         * configured DeleteXmlBuilder.
+         * Creates nodes representing the delete operation inside of the Transaction.
          * @constructor
+         * @alias WfsDelete
          */
-        var DeleteXmlBuilder = {
-            Delete: function (doc, typeName, propertyName) {
-                var Delete = doc.createElement('wfs:Delete');
-                Delete.setAttribute('typeName', typeName);
-                var filter = doc.createElement('ogc:Filter');
-                var filtType = doc.createElement('ogc:PropertyIsEqualTo');
-                var propName = doc.createElement('ogc:PropertyName');
-                propName.textContent = propertyName;
-                var literal = doc.createElement('ogc:Literal');
-                literal.textContent = 'alley';
-                filtType.appendChild(propName);
-                filtType.appendChild(literal);
-                filter.appendChild(filtType);
-                Delete.appendChild(filter);
-                doc.documentElement.appendChild(Delete);
-                return doc;
-            }
+        var WfsDelete = function(document) {
+            this._xmlDocument = document;
         };
 
-        return DeleteXmlBuilder;
+        /**
+         * Creates Dom XML Node representation of the WFS Delete element.
+         * TODO: Make sure the delete operation is valid.
+         * @param typeName {String}
+         * @param propertyName {String}
+         * @return {Node}
+         */
+        WfsDelete.prototype.dom = function(typeName, propertyName) {
+            var element = this._xmlDocument.createElement('wfs:Delete');
+            element.setAttribute('typeName', typeName);
+
+            var filter = this._xmlDocument.createElement('ogc:Filter');
+            var filterType = this._xmlDocument.createElement('ogc:PropertyIsEqualTo');
+            var propName = this._xmlDocument.createElement('ogc:PropertyName');
+            propName.textContent = propertyName;
+
+            // This probably needs to be removed.
+            var literal = this._xmlDocument.createElement('ogc:Literal');
+            literal.textContent = 'alley';
+            filterType.appendChild(propName);
+            filterType.appendChild(literal);
+            filter.appendChild(filterType);
+            element.appendChild(filter);
+
+            return this._xmlDocument;
+        };
+
+        return WfsDelete;
     });
