@@ -793,13 +793,153 @@ define([
                 new Vec3(0, 0, 0));
             var newPoint = globe.computePointFromLocation(newLocation.latitude, newLocation.longitude,
                 new Vec3(0, 0, 0));
-            var delta = newPoint.subtract(oldPoint);
 
-            for (var i = 0, len = locations.length; i < len; i++) {
-                globe.computePointFromLocation(locations[i].latitude, locations[i].longitude, result);
-                result.add(delta);
-                globe.computePositionFromPoint(result[0], result[1], result[2], newPos);
-                newLocations.push(new Location(newPos.latitude, newPos.longitude));
+            if(globe.is2D()){
+                var delta = newPoint.subtract(oldPoint);
+
+                for (var i = 0, len = locations.length; i < len; i++) {
+                    globe.computePointFromLocation(locations[i].latitude, locations[i].longitude, result);
+                    result.add(delta);
+                    globe.computePositionFromPoint(result[0], result[1], result[2], newPos);
+                    newLocations.push(new Location(newPos.latitude, newPos.longitude));
+                }
+            } else {
+                var delta_lat = newLocation.latitude - oldLocation.latitude;
+                var delta_long = newLocation.longitude - oldLocation.longitude;
+                var max = -90;
+                var min = 90;
+
+                for (var i = 0, len = locations.length; i < len; i++) {
+                    var new_lat = locations[i].latitude + delta_lat;
+                    var new_long = locations[i].longitude + delta_long;
+
+
+                    if (new_lat > 90) {
+                        new_lat = 180 - new_lat;
+                        new_long += 180;
+                    } else if (new_lat < -90) {
+                        new_lat = -180 - new_lat;
+                        new_long += 180;
+                    }
+
+                    if (new_long < -180) {
+                        new_long += 360;
+                    } else if (new_long > 180) {
+                        new_long -= 360;
+                    }
+
+
+                    if (new_lat > max) {
+                        max = new_lat;
+                    }
+
+                    if (new_lat < min) {
+                        min = new_lat;
+                    }
+
+                    console.dir("***");
+                    console.dir(new_long);
+                    console.dir(new_lat);
+                    console.dir("***");
+
+                    newLocations.push(new Location(new_lat, new_long));
+                }
+
+                // if (max > 90) {
+                //     var delta = max - 90;
+                //     console.dir('delta : ' + delta);
+                //     for (var i = 0, len = newLocations.length; i < len; i++) {
+                //         newLocations[i].latitude -= delta;
+                //     }
+                // }
+
+
+
+                // var xVecOld = new Vec3(0, oldPoint[1], oldPoint[2]);
+                // var yVecOld =  new Vec3(oldPoint[0], 0, oldPoint[2]);
+                // var zVecOld =  new Vec3(oldPoint[0], oldPoint[1], 0);
+                // var xVecNew = new Vec3(0, newPoint[1], newPoint[2]);
+                // var yVecNew =  new Vec3(newPoint[0], 0, newPoint[2]);
+                // var zVecNew =  new Vec3(newPoint[0], newPoint[1], 0);
+                //
+                //
+                // var alpha = Math.acos(xVecOld.dot(xVecNew) / (xVecOld.magnitude() * xVecNew.magnitude()));
+                // var beta = Math.acos(yVecOld.dot(yVecNew) / (yVecOld.magnitude() * yVecNew.magnitude()));
+                // var gama = Math.acos(zVecOld.dot(zVecNew) / (zVecOld.magnitude() * zVecNew.magnitude()));
+                //
+                // var crossX = xVecOld.cross(xVecNew);
+                // var crossY = yVecOld.cross(yVecNew);
+                // var crossZ = zVecOld.cross(zVecNew);
+                //
+                // if(new Vec3(1, 0, 0).dot(crossX) < 0){
+                //      alpha = -alpha;
+                // }
+                //
+                // if(new Vec3(0, 1, 0).dot(crossY) < 0){
+                //     beta = -beta;
+                // }
+                //
+                // if(new Vec3(0, 0, 1).dot(crossZ) < 0){
+                //     gama = -gama;
+                // }
+                //
+                // for (var i = 0, len = locations.length; i < len; i++) {
+                //     globe.computePointFromLocation(locations[i].latitude, locations[i].longitude, result);
+                //     var newX = result[0] * Math.cos(beta) * Math.cos(gama) +
+                //                result[1] * (Math.cos(beta) * (-Math.sin(gama))) +
+                //                result[2] * Math.sin(beta);
+                //
+                //     var newY = result[0] * ((-Math.sin(alpha)) * (-Math.sin(beta)) * (Math.cos(gama)) + Math.cos(alpha) * Math.sin(gama)) +
+                //                result[1] * ( (-Math.sin(alpha)) * (-Math.sin(beta)) * (-Math.sin(gama)) + Math.cos(alpha) * Math.cos(gama) ) +
+                //                result[2] * Math.sin(alpha) * Math.cos(beta);
+                //
+                //     var newZ = result[0] * (Math.cos(alpha) * (-Math.sin(beta)) * Math.cos(gama) + Math.sin(alpha) * Math.sin(gama)) +
+                //                result[1] * (Math.cos(alpha) * (-Math.sin(beta)) * (-Math.sin(gama)) + Math.sin(alpha) * Math.cos(gama)) +
+                //                result[2] * Math.cos(alpha) * Math.cos(beta);
+                //
+                //     globe.computePositionFromPoint(newX, newY, newZ, newPos);
+                //     newLocations.push(new Location(newPos.latitude, newPos.longitude));
+                // }
+
+
+                // var angleRad = Math.acos(oldPoint.dot(newPoint) / (oldPoint.magnitude() * newPoint.magnitude()));
+                // var cross = oldPoint.cross(newPoint);
+                //
+                // //x axis rotation
+                // // if(new Vec3(1, 0, 0).dot(cross) < 0){
+                // //     angleRad = -angleRad;
+                // // }
+                //
+                // //y axis rotation
+                // if(new Vec3(0, 1, 0).dot(cross) < 0){
+                //     angleRad = -angleRad;
+                // }
+                //
+                // //z axis rotation
+                // // if(new Vec3(0, 0, 1).dot(cross) < 0){
+                // //     angleRad = -angleRad;
+                // // }
+                //
+                // for (var i = 0, len = locations.length; i < len; i++) {
+                //     globe.computePointFromLocation(locations[i].latitude, locations[i].longitude, result);
+                //     //x rotation
+                //     // var newX = result[0];
+                //     // var newY = result[1] * Math.cos(angleRad) - result[2] * Math.sin(angleRad);
+                //     // var newZ = result[1] * Math.sin(angleRad) + result[2] * Math.cos(angleRad);
+                //
+                //     //y rotation (stanga-Dreapta)
+                //     var newX = result[2] * Math.sin(angleRad) + result[0] * Math.cos(angleRad);
+                //     var newY = result[1];
+                //     var newZ = result[2] * Math.cos(angleRad) - result[0] * Math.sin(angleRad);
+                //
+                //     //z rotation (sus-Jos)
+                //     // var newX = result[0] * Math.cos(angleRad)  - result[1] * Math.sin(angleRad);
+                //     // var newY = result[0] * Math.sin(angleRad) + result[1] * Math.cos(angleRad);
+                //     // var newZ = result[2];
+                //
+                //     globe.computePositionFromPoint(newX, newY, newZ, newPos);
+                //     newLocations.push(new Location(newPos.latitude, newPos.longitude));
+                // }
             }
 
             return newLocations;

@@ -1,12 +1,11 @@
 /*
- * Copyright 2003-2006, 2009, 2017, United States Government, as represented by the Administrator of the
- * National Aeronautics and Space Administration. All rights reserved.
+ * Copyright 2015-2018 WorldWind Contributors
  *
- * The NASAWorldWind/WebWorldWind platform is licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -117,6 +116,8 @@ requirejs(['./WorldWindShim',
         sectorShape.highlightAttributes = highlightAttributes;
         shapesLayer.addRenderable(sectorShape);
 
+
+
         wwd.goTo(new WorldWind.Position(40.42, -104.60, 2417000));
 
         // Create a layer manager for controlling layer visibility.
@@ -171,6 +172,12 @@ requirejs(['./WorldWindShim',
             if (shape !== sectorShape) {
                 shapeEditor.edit(sectorShape);
             }
+        });
+
+        document.getElementById("moveShapeBtn").addEventListener("click", function(){
+            var oldPos = shapeEditor.shape.getReferencePosition();
+            var newPos = new WorldWind.Location(oldPos.latitude, oldPos.longitude + 10);
+            shapeEditor.shape.moveTo(wwd.globe, new WorldWind.Location(newPos.latitude, newPos.longitude));
         });
     }
 );
