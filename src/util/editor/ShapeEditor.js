@@ -30,6 +30,7 @@ define([
         '../../shapes/PlacemarkAttributes',
         './PlacemarkEditorFragment',
         '../../geom/Position',
+        '../Promise',
         '../../layer/RenderableLayer',
         '../../shapes/ShapeAttributes',
         './ShapeEditorConstants',
@@ -55,6 +56,7 @@ define([
               PlacemarkAttributes,
               PlacemarkEditorFragment,
               Position,
+              Promise,
               RenderableLayer,
               ShapeAttributes,
               ShapeEditorConstants,
@@ -232,6 +234,11 @@ define([
             this._longPressTimeout = 0;
             this._longPressDelay = 1500;
 
+            // Internal use only.
+            // Used for shape creation
+            this.creatorEnabled = false;
+            this.creatorShapeProperties = null;
+            this.promisedShape = null;
 
             this._worldWindow.worldWindowController.addGestureListener(this);
         };
@@ -319,6 +326,37 @@ define([
             }
         });
 
+        ShapeEditor.prototype.create = function (shape, properties) {
+            var res, rej;
+
+            this.stop();
+            this.setCreatorEnabled(true);
+
+            for (var i = 0, len = this.editorFragments.length; i < len; i++) {
+                var editorFragment = this.editorFragments[i];
+                if (editorFragment.canHandle(shape)) {
+                    this.activeEditorFragment = editorFragment;
+                    this.creatorShapeProperties = properties;
+                }
+            }
+
+            if (this.activeEditorFragment != null) {
+                var promise = new Promise(function (resolve, reject) {
+                    res = resolve;
+                    rej = reject;
+                });
+
+                promise.resolve = res;
+                promise.reject = rej;
+
+                this.promisedShape = promise;
+
+                return promise;
+            } else {
+                return null;
+            }
+        };
+
         /**
          * Edits the specified shape. Currently, only surface shapes are supported.
          * @param {SurfaceShape} shape The shape to edit.
@@ -371,6 +409,9 @@ define([
             this._allowRotate = false;
             this._allowManageControlPoint = false;
 
+            this.activeEditorFragment = null;
+            this.creatorShapeProperties = null;
+
             var currentShape = this._shape;
             this._shape = null;
 
@@ -379,6 +420,27 @@ define([
             }
 
             return currentShape;
+        };
+
+        /**
+         * Identifies whether the shape editor create mode is armed.
+         * @return true if armed, false if not armed.
+         */
+        ShapeEditor.prototype.isCreatorEnabled = function() {
+            return this.creatorEnabled;
+        };
+
+        /**
+         * Arms and disarms the shape editor create mode. When armed, editor monitors user input and builds the
+         * shape in response to user actions. When disarmed, the shape editor ignores all user input for creation of a
+         * new shape.
+         *
+         * @param armed true to arm the shape editor create mode, false to disarm it.
+         */
+        ShapeEditor.prototype.setCreatorEnabled = function(creatorEnabled) {
+            if (this.creatorEnabled != creatorEnabled) {
+                this.creatorEnabled = creatorEnabled;
+            }
         };
 
         // Internal use only.
@@ -441,7 +503,7 @@ define([
         // Internal use only.
         // Dispatches the events relevant to the shape editor.
         ShapeEditor.prototype.onGestureEvent = function (event) {
-            if(this._shape === null) {
+            if(this._shape === null && !this.isCreatorEnabled()) {
                 return;
             }
 
@@ -514,6 +576,35 @@ define([
                     }
                 }, this._longPressDelay
             );
+
+            if (terrainObject && this.isCreatorEnabled() && this.activeEditorFragment !== null && this._shape === null) {
+
+                if (this.activeEditorFragment.isRegularShape()) {
+                    this.creatorShapeProperties.center = terrainObject.position;
+                    this.creatorShapeProperties._boundaries = [
+                        {
+                            latitude: terrainObject.position.latitude - 1,
+                            longitude: terrainObject.position.longitude - 1
+                        },
+                        {
+                            latitude: terrainObject.position.latitude + 1,
+                            longitude: terrainObject.position.longitude - 1
+                        },
+                        {
+                            latitude: terrainObject.position.latitude + 1,
+                            longitude: terrainObject.position.longitude + 1
+                        }
+                    ];
+                } else {
+                    // TODO: create other shapes
+                }
+
+                this._shape = this.activeEditorFragment.createShadowShape(this.creatorShapeProperties);
+
+                this.promisedShape.resolve(this._shape);
+                this.edit(this._shape, true, true, true, true);
+                event.preventDefault();
+            }
 
             for (var p = 0, len = pickList.objects.length; p < len; p++) {
                 var object = pickList.objects[p];
