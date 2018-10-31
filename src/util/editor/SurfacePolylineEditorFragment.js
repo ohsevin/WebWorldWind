@@ -43,6 +43,9 @@ define([
 
         //Internal use only. Intentionally not documented.
         SurfacePolylineEditorFragment.prototype.canHandle = function (shape) {
+            if (shape instanceof Function) {
+                return shape.name === "SurfacePolyline";
+            }
             return shape instanceof SurfacePolyline;
         };
 
@@ -54,6 +57,11 @@ define([
         //Internal use only. Intentionally not documented.
         SurfacePolylineEditorFragment.prototype.getShapeCenter = function (shape, globe) {
             return this.getCenterFromLocations(globe, shape.boundaries);
+        };
+
+        // Internal use only.
+        SurfacePolylineEditorFragment.prototype.isRegularShape = function () {
+            return false;
         };
 
         // Internal use only.

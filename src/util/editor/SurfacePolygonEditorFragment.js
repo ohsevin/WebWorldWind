@@ -43,6 +43,9 @@ define([
 
         // Internal use only.
         SurfacePolygonEditorFragment.prototype.canHandle = function (shape) {
+            if (shape instanceof Function) {
+                return shape.name === "SurfacePolygon";
+            }
             return shape instanceof SurfacePolygon;
         };
 
@@ -54,6 +57,11 @@ define([
         // Internal use only.
         SurfacePolygonEditorFragment.prototype.getShapeCenter = function (shape, globe) {
             return this.getCenterFromLocations(globe, shape.boundaries);
+        };
+
+        // Internal use only.
+        SurfacePolygonEditorFragment.prototype.isRegularShape = function () {
+            return false;
         };
 
         // Internal use only.
