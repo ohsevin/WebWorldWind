@@ -61,6 +61,14 @@ requirejs(['./WorldWindShim',
         var highlightAttributes = new WorldWind.ShapeAttributes(attributes);
         highlightAttributes.outlineColor = WorldWind.Color.RED;
 
+        var polylineAttributes = new WorldWind.ShapeAttributes(null);
+        polylineAttributes.outlineColor = WorldWind.Color.BLACK;
+        polylineAttributes.interiorColor = new WorldWind.Color(1, 1, 1, 1.0);
+        polylineAttributes.outlineWidth = 5;
+
+        var polylineHighlightAttributes = new WorldWind.ShapeAttributes(polylineAttributes);
+        polylineHighlightAttributes.outlineColor = WorldWind.Color.RED;
+
         var circleShape = new WorldWind.SurfaceCircle(new WorldWind.Location(35, -110), 200e3, attributes);
         circleShape.highlightAttributes = highlightAttributes;
         shapesLayer.addRenderable(circleShape);
@@ -105,8 +113,8 @@ requirejs(['./WorldWindShim',
         polylineBoundaries.push(new WorldWind.Location(40, -115));
         polylineBoundaries.push(new WorldWind.Location(43, -110));
         polylineBoundaries.push(new WorldWind.Location(50, -120));
-        var polylineShape = new WorldWind.SurfacePolyline(polylineBoundaries, attributes);
-        polylineShape.highlightAttributes = highlightAttributes;
+        var polylineShape = new WorldWind.SurfacePolyline(polylineBoundaries, polylineAttributes);
+        polylineShape.highlightAttributes = polylineHighlightAttributes;
         shapesLayer.addRenderable(polylineShape);
 
         var rectangleShape = new WorldWind.SurfaceRectangle(new WorldWind.Location(33, -105), 300e3, 200e3, 70, attributes);
@@ -122,12 +130,18 @@ requirejs(['./WorldWindShim',
         placemark.altitudeMode = WorldWind.CLAMP_TO_GROUND;
 
         var placemarkAttributes = new WorldWind.PlacemarkAttributes(null);
+        placemarkAttributes.imageSource = WorldWind.configuration.baseUrl + "images/pushpins/plain-red.png";
+        placemarkAttributes.imageScale = 1;
+        placemarkAttributes.imageOffset = new WorldWind.Offset(
+            WorldWind.OFFSET_FRACTION, 0.3,
+            WorldWind.OFFSET_FRACTION, 0.0);
         placemarkAttributes.imageColor = WorldWind.Color.WHITE;
-        placemarkAttributes.imageScale = 20;
+        placemarkAttributes.drawLeaderLine = true;
+        placemarkAttributes.leaderLineAttributes.outlineColor = WorldWind.Color.RED;
 
         var highlightPlacemarkAttributes = new WorldWind.PlacemarkAttributes(null);
         highlightPlacemarkAttributes.imageColor = WorldWind.Color.RED;
-        highlightPlacemarkAttributes.imageScale = 20;
+        highlightPlacemarkAttributes.imageScale = 1.2;
 
         placemark.attributes = placemarkAttributes;
         placemark.highlightAttributes = highlightPlacemarkAttributes;
