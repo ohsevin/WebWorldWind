@@ -152,6 +152,61 @@ requirejs(['./WorldWindShim',
 
         var shapeEditor = new WorldWind.ShapeEditor(wwd);
 
+        document.getElementById("createCircleBtn").addEventListener("click", function(){
+            var properties = {
+                center: null,
+                radius: 1,
+                attributes: attributes
+            };
+
+            shapeEditor.create(WorldWind.SurfaceCircle, properties).then(
+                function (shape) {
+                    if (shape !== null) {
+                        shape.highlightAttributes = highlightAttributes;
+                        shapesLayer.addRenderable(shape);
+                        shapeEditor.edit(shape, true, true, true, true);
+                    } else {
+                        console.log("No shape created - null shape returned.");
+                    }
+
+                },
+                function (error) {
+                    if (error) {
+                        console.log("Error in shape creation: " + error);
+                    } else {
+                        console.log("No shape created.");
+                    }
+                }
+            );
+        });
+
+        document.getElementById("createSectorBtn").addEventListener("click", function(){
+            var properties = {
+                _boundaries: null,
+                attributes: attributes
+            };
+
+            shapeEditor.create(WorldWind.SurfaceSector, properties).then(
+                function (shape) {
+                    if (shape !== null) {
+                        shape.highlightAttributes = highlightAttributes;
+                        shapesLayer.addRenderable(shape);
+                        shapeEditor.edit(shape, true, true, true, true);
+                    } else {
+                        console.log("No shape created - null shape returned.");
+                    }
+
+                },
+                function (error) {
+                    if (error) {
+                        console.log("Error in shape creation: " + error);
+                    } else {
+                        console.log("No shape created.");
+                    }
+                }
+            );
+        });
+
         document.getElementById("editCircleBtn").addEventListener("click", function(){
             var shape = shapeEditor.stop();
             if (shape !== circleShape) {
